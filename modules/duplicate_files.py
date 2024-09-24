@@ -57,10 +57,58 @@ def duplicate_files_in_directory(directory, verbose=True):
         return False
 
     if verbose:
-        cprint("\n[!] Duplicate files found:", "red")
-        for duplicate_files in duplicate_files_list:
-            for file in duplicate_files:
-                print(colored(f" - {file}", "red"))
-            print()
+        print(colored("\n[!] Duplicate files found:", "red"),
+              colored(len(duplicate_files_list), "yellow"))
 
     return duplicate_files_list
+
+
+def delete_duplicate_files_in_directory(directory, verbose=True, force=False, dry_run=False):
+    """
+    Deletes duplicate files in a given directory.
+
+    :param directory: The directory to search for duplicates.
+    :param verbose: Whether to print detailed information.
+    :param force: If True, automatically delete duplicates without confirmation.
+    :param dry_run: If True, display duplicates without deleting them.
+    :return: A list of deleted files (if any).
+    """
+    duplicate_files_list = duplicate_files_in_directory(directory, verbose)
+    deleted_files = []
+
+    if duplicate_files_list:
+        for idx, files in enumerate(duplicate_files_list):
+            if verbose:
+                print(f"{idx + 1}/{len(duplicate_files_list)}",
+                      colored(files[0], "cyan"))
+                for _file in files[1:]:
+                    print(colored(_file, "red"))
+
+            if not force:
+                delete = input(
+                    colored("[?] Delete duplicate files? (y/N): ", "magenta"))
+            else:
+                delete = 'y'  # Automatically set to 'y' if force=True
+
+            if delete.lower() == "y":
+                for _file in files[1:]:
+                    if os.path.exists(_file):
+                        if not dry_run:
+                            try:
+                                os.remove(_file)
+                                deleted_files.append(_file)
+                                if verbose:
+                                    print(colored(f"Deleted {_file}", "green"))
+                            except OSError as e:
+                                print(
+                                    colored(f"Error deleting {_file}: {e}", "red"))
+                        else:
+                            if verbose:
+                                print(
+                                    colored(f"[Dry run] {_file} would be deleted", "yellow"))
+
+    if not deleted_files and not dry_run:
+        if verbose:
+            print(colored("[!] No duplicate files were deleted.", "yellow"))
+
+    return deleted_files
