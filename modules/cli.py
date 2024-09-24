@@ -26,21 +26,16 @@ def main():
     parser.add_argument(
         "-f", "--force",
         action="store_true",
-        help="Force deletion of duplicate files without confirmation."
-    )
-
-    # Dry run mode: show duplicates without deleting them
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show which duplicate files would be deleted without actually deleting them."
+        help="Force deletion of duplicate files without confirmation.",
+        default=False
     )
 
     # Verbose output
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="Print detailed information during execution."
+        help="Print detailed information during execution.",
+        default=True
     )
 
     # Parse the arguments
@@ -56,7 +51,6 @@ def main():
             directory=args.source,
             verbose=args.verbose,
             force=args.force,
-            dry_run=args.dry_run
         )
     else:
         # Otherwise, just find duplicate files and show them
