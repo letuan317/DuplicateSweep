@@ -84,29 +84,22 @@ def delete_duplicate_files_in_directory(directory, verbose=True, force=False, dr
                 for _file in files[1:]:
                     print(colored(_file, "red"))
 
-            if not force:
-                delete = input(
-                    colored("[?] Delete duplicate files? (y/N): ", "magenta"))
-            else:
-                delete = 'y'  # Automatically set to 'y' if force=True
-
-            if delete.lower() == "y":
-                for _file in files[1:]:
-                    if os.path.exists(_file):
-                        if not dry_run:
-                            try:
-                                os.remove(_file)
-                                deleted_files.append(_file)
-                                if verbose:
-                                    print(
-                                        colored(f"[-] Deleted", "red"), colored(_file, "light_red"))
-                            except OSError as e:
-                                print(
-                                    colored(f"[!] Error deleting {_file}: {e}", "red"))
-                        else:
+            for _file in files[1:]:
+                if os.path.exists(_file):
+                    if not dry_run:
+                        try:
+                            os.remove(_file)
+                            deleted_files.append(_file)
                             if verbose:
                                 print(
-                                    colored(f"[Dry run] {_file} would be deleted", "yellow"))
+                                    colored(f"[-] Deleted", "red"), colored(_file, "light_red"))
+                        except OSError as e:
+                            print(
+                                colored(f"[!] Error deleting {_file}: {e}", "red"))
+                    else:
+                        if verbose:
+                            print(
+                                colored(f"[Dry run] {_file} would be deleted", "yellow"))
 
     if not deleted_files and not dry_run:
         if verbose:
