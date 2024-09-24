@@ -79,7 +79,7 @@ def delete_duplicate_files_in_directory(directory, verbose=True, force=False, dr
     if duplicate_files_list:
         for idx, files in enumerate(duplicate_files_list):
             if verbose:
-                print(f"{idx + 1}/{len(duplicate_files_list)}",
+                print(f"\n{idx + 1}/{len(duplicate_files_list)}",
                       colored(files[0], "cyan"))
                 for _file in files[1:]:
                     print(colored(_file, "red"))
