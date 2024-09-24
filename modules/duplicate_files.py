@@ -63,21 +63,56 @@ def duplicate_files_in_directory(directory, verbose=True):
     return duplicate_files_list
 
 
-def delete_duplicate_files_in_directory(directory, verbose=True, force=False):
+def duplicate_files_from_source_directory_with_target_directory(source_directory, target_directory, verbose=True):
     """
-    Deletes duplicate files in a given directory.
+    Identifies duplicate files from source directory with target directory, if duplicate, delete source file
+
+    :param source_directory: The directory to search for duplicates.
+    :param target_directory: The directory to move the duplicate files to.
+    :param verbose: Whether to print detailed information.
+    :return: A list of moved files (if any).
+    """
+    source_files = finder.get_all_files(source_directory)
+    target_files_by_size = finder.group_files_by_size(target_directory)
+
+    duplicate_files_list = []
+
+    with alive_bar(len(source_files)) as bar:
+        for source_file in source_files:
+            source_file_size = os.path.getsize(source_file)
+
+            if target_files_by_size.get(source_file_size):
+                _target_files = target_files_by_size[source_file_size]
+
+                for _target_file in _target_files:
+                    if filecmp.cmp(source_file, _target_file, shallow=False):
+                        duplicate_files_list.append(
+                            [_target_file, source_file])
+                        break
+            bar()
+
+    if len(duplicate_files_list) == 0:
+        cprint("\n[!] No duplicate files found.", "yellow")
+
+    return duplicate_files_list
+
+
+def delete_duplicate_files(duplicate_files_list, verbose=True, force=False):
+    """
+    Deletes duplicate files in a given duplicate_files_list. Will keep first file in the list. and all other files will be deleted.
 
     :param directory: The directory to search for duplicates.
     :param verbose: Whether to print detailed information.
     :param force: If True, automatically delete duplicates without confirmation.
     :return: A list of deleted files (if any).
     """
-    duplicate_files_list = duplicate_files_in_directory(directory, verbose)
 
     for idx, files in enumerate(duplicate_files_list):
         print(f"\n{idx + 1}/{len(duplicate_files_list)}",
               colored(files[0], "cyan"))
-        for _file in files[1:]:
+
+        delete_files = files[1:]
+        for _file in delete_files:
             print(colored(_file, "red"))
 
         if not force:
@@ -89,7 +124,7 @@ def delete_duplicate_files_in_directory(directory, verbose=True, force=False):
             if confirm.lower() != "y":
                 continue
 
-        for _file in files[1:]:
+        for _file in delete_files:
             if os.path.exists(_file):
                 try:
                     os.remove(_file)

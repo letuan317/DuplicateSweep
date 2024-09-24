@@ -1,6 +1,6 @@
 import argparse
 from termcolor import cprint
-from modules.duplicate_files import duplicate_files_in_directory, delete_duplicate_files_in_directory
+from modules import duplicate_files
 
 
 def main():
@@ -13,6 +13,10 @@ def main():
     parser.add_argument(
         "-s", "--source",
         help="The directory to scan for duplicate files."
+    )
+    parser.add_argument(
+        "-t", "--target",
+        help="The target directory to scan for duplicate files."
     )
 
     # Optional argument to delete duplicate files
@@ -45,16 +49,22 @@ def main():
     if args.verbose:
         cprint(f"[*] Scanning directory: {args.source}", "blue")
 
-    # If --delete is specified, delete duplicate files
-    if args.delete:
-        delete_duplicate_files_in_directory(
-            directory=args.source,
-            verbose=args.verbose,
-            force=args.force,
+    if args.target:
+        duplicate_files = duplicate_files.duplicate_files_from_source_directory_with_target_directory(
+            source_directory=args.source,
+            target_directory=args.target,
+            verbose=args.verbose
         )
-    else:
-        # Otherwise, just find duplicate files and show them
-        duplicate_files_in_directory(
+
+    elif args.source:
+        duplicate_files = duplicate_files.duplicate_files_in_directory(
             directory=args.source,
             verbose=args.verbose
+        )
+
+    if duplicate_files and args.delete:
+        duplicate_files.delete_duplicate_files(
+            duplicate_files_list=duplicate_files,
+            verbose=args.verbose,
+            force=args.force
         )
