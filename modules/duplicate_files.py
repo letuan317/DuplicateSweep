@@ -24,11 +24,13 @@ def duplicate_files_in_directory(directory):
 
             if len(temp_list) > 2:
                 duplicate_files_list.append(temp_list)
-                for file in temp_list:
-                    file_size = os.path.getsize(file)
-                    print(f"\nFiles with size {file_size} bytes:",
-                          utils.convert_size(file_size))
-                    print(colored(f" - {file}", "red"))
+
+                file_size = os.path.getsize(temp_list[0])
+                print(f"\nFiles with size {file_size} bytes:",
+                      utils.convert_size(file_size))
+
+                for _file in temp_list:
+                    print(colored(f" - {_file}", "red"))
 
     if len(duplicate_files_list) == 0:
         cprint("\n[!] No duplicate files found.", "yellow")
