@@ -42,3 +42,4 @@ def duplicate_files_in_directory(directory):
     for duplicate_files in duplicate_files_list:
         for file in duplicate_files:
             print(colored(f" - {file}", "red"))
+        print()

@@ -96,6 +96,7 @@ def group_files_by_size(directory: str, verbose: bool = True) -> dict[int, list[
                 print(f"Error accessing file {file_path}: {e}")
 
     if verbose:
-        print(colored(f"[*] Found {count} files", "green"))
+        print(colored(f"[*] Found", "green"),
+              colored(count, "yellow"), colored("files", "green"))
 
     return files_by_size
