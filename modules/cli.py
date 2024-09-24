@@ -50,21 +50,21 @@ def main():
         cprint(f"[*] Scanning directory: {args.source}", "blue")
 
     if args.target:
-        duplicate_files = duplicate_files.duplicate_files_from_source_directory_with_target_directory(
+        duplicate_files_list = duplicate_files.duplicate_files_from_source_directory_with_target_directory(
             source_directory=args.source,
             target_directory=args.target,
             verbose=args.verbose
         )
 
     elif args.source:
-        duplicate_files = duplicate_files.duplicate_files_in_directory(
+        duplicate_files_list = duplicate_files.duplicate_files_in_directory(
             directory=args.source,
             verbose=args.verbose
         )
 
-    if duplicate_files and args.delete:
+    if duplicate_files_list and args.delete:
         duplicate_files.delete_duplicate_files(
-            duplicate_files_list=duplicate_files,
+            duplicate_files_list=duplicate_files_list,
             verbose=args.verbose,
             force=args.force
         )
