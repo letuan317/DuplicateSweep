@@ -1,29 +1,77 @@
 from termcolor import colored
 from pathlib import Path
-from termcolor import cprint, colored
 import os
 from collections import defaultdict
 
 
-def get_all_files(directory, verbose=True):
+def read_gitignore(gitignore_path='.gitignore'):
+    """
+    Reads a .gitignore file and separates file and folder ignore patterns.
+    Returns a dictionary with two keys: 'files' and 'folders'.
+    """
+    files = []
+    folders = []
+
+    if not os.path.exists(gitignore_path):
+        return {'files': [], 'folders': []}
+
+    with open(gitignore_path, 'r') as file:
+        lines = file.readlines()
+
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if line.endswith('/'):
+            folders.append(line.rstrip('/'))
+        else:
+            files.append(line)
+
+    return {'files': files, 'folders': folders}
+
+
+def is_ignored(file_path, ignored_files, ignored_folders):
+    """
+    Checks if a given file or folder should be ignored based on .gitignore patterns.
+    """
+    file_name = file_path.name
+    parent_folder = str(file_path.parent)
+
+    if any(folder in parent_folder for folder in ignored_folders):
+        return True
+
+    if any(file_name.endswith(pattern.strip('*')) for pattern in ignored_files):
+        return True
+
+    return False
+
+
+def get_all_files(directory, gitignore_data=None, verbose=True):
+    """
+    Recursively gets all files from the given directory, filtering ignored files and folders.
+    """
     if verbose:
         print(colored("[#] Getting all files in the directory:",
-                      "blue"), colored(directory, "yellow"))
+              "blue"), colored(directory, "yellow"))
 
-    """
-    Recursively gets all files from the given directory and its subfolders.
-
-    :param directory: The root directory to start the search
-    :return: A list of full file paths
-    """
     all_files = []
 
-    # Walk through the directory and subdirectories
-    for root, _, files in os.walk(directory):
+    if gitignore_data is None:
+        gitignore_data = read_gitignore()
+
+    ignored_files = gitignore_data['files']
+    ignored_folders = gitignore_data['folders']
+
+    for root, folders, files in os.walk(directory):
+        folders[:] = [folder for folder in folders if folder not in ignored_folders]
+
         for file in files:
-            # Construct full file path
-            full_path = os.path.join(root, file)
-            all_files.append(full_path)
+            full_path = Path(root) / file
+
+            if is_ignored(full_path, ignored_files, ignored_folders):
+                continue
+
+            all_files.append(str(full_path))
 
     if verbose:
         print(colored("[*] Found", "green"),
@@ -32,32 +80,37 @@ def get_all_files(directory, verbose=True):
     return all_files
 
 
-def get_files_with_size(directory, verbose=True):
+def get_files_with_size(directory, gitignore_data=None, verbose=True):
+    """
+    Gets all files with their sizes, filters ignored files and folders, and sorts the result by file size.
+    """
     if verbose:
-        print(colored("[#] Getting all files with size in the directory:",
-                      "blue"), colored(directory, "yellow"))
-    """
-    Recursively gets all files from the given directory and its subfolders, along with their sizes.
-    Files are sorted by size.
+        print(colored("[#] Getting all files with size in the directory:", "blue"), colored(
+            directory, "yellow"))
 
-    :param directory: The root directory to start the search
-    :return: A list of tuples (file_path, file_size) sorted by file size
-    """
     files_with_size = []
 
-    # Walk through the directory and subdirectories
-    for root, _, files in os.walk(directory):
+    if gitignore_data is None:
+        gitignore_data = read_gitignore()
+
+    ignored_files = gitignore_data['files']
+    ignored_folders = gitignore_data['folders']
+
+    for root, folders, files in os.walk(directory):
+        folders[:] = [folder for folder in folders if folder not in ignored_folders]
+
         for file in files:
-            # Construct full file path
-            full_path = os.path.join(root, file)
+            full_path = Path(root) / file
 
-            # Get the file size
-            file_size = os.path.getsize(full_path)
+            if is_ignored(full_path, ignored_files, ignored_folders):
+                continue
 
-            # Append the file path and size as a tuple
-            files_with_size.append((full_path, file_size))
+            try:
+                file_size = full_path.stat().st_size
+                files_with_size.append((str(full_path), file_size))
+            except OSError as e:
+                print(f"Error accessing file {full_path}: {e}")
 
-    # Sort files by size (second element in the tuple)
     files_with_size.sort(key=lambda x: x[1])
 
     if verbose:
@@ -67,31 +120,35 @@ def get_files_with_size(directory, verbose=True):
     return files_with_size
 
 
-def group_files_by_size(directory: str, verbose: bool = True) -> dict[int, list[str]]:
+def group_files_by_size(directory, gitignore_data=None, verbose=True):
     """
-    Recursively gets all files from the given directory and its subfolders, groups them by file size.
-
-    :param directory: The root directory to start the search
-    :param verbose: Whether to print progress information
-    :return: A dictionary where keys are file sizes, and values are lists of file paths with that size
+    Groups files by size from the given directory, filtering ignored files and folders.
+    Returns a dictionary where keys are file sizes, and values are lists of file paths.
     """
     if verbose:
-        print(colored(f"[#] Group files by size in the directory:", "blue"), colored(
+        print(colored("[#] Grouping files by size in the directory:", "blue"), colored(
             directory, "yellow"))
 
     files_by_size = defaultdict(list)
     count = 0
 
-    # Using pathlib for clearer and safer path management
+    if gitignore_data is None:
+        gitignore_data = read_gitignore()
+
+    ignored_files = gitignore_data['files']
+    ignored_folders = gitignore_data['folders']
+
     root_path = Path(directory)
 
-    for file_path in root_path.rglob('*'):  # rglob gets all files recursively
-        if file_path.is_file():  # Ensure it's a file
-            count += 1
+    for file_path in root_path.rglob('*'):
+        if is_ignored(file_path, ignored_files, ignored_folders):
+            continue
+
+        if file_path.is_file():
             try:
-                file_size = file_path.stat().st_size  # Efficient way to get file size
-                # Append file path as a string
+                file_size = file_path.stat().st_size
                 files_by_size[file_size].append(str(file_path))
+                count += 1
             except OSError as e:
                 print(f"Error accessing file {file_path}: {e}")
 
