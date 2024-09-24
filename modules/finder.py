@@ -1,3 +1,5 @@
+from termcolor import colored
+from pathlib import Path
 from termcolor import cprint, colored
 import os
 from collections import defaultdict
@@ -65,38 +67,35 @@ def get_files_with_size(directory, verbose=True):
     return files_with_size
 
 
-def group_files_by_size(directory, verbose=True):
-    if verbose:
-        print(colored("[#] Group files by size in the directory:",
-                      "blue"), colored(directory, "yellow"))
+def group_files_by_size(directory: str, verbose: bool = True) -> dict[int, list[str]]:
     """
     Recursively gets all files from the given directory and its subfolders, groups them by file size.
 
     :param directory: The root directory to start the search
+    :param verbose: Whether to print progress information
     :return: A dictionary where keys are file sizes, and values are lists of file paths with that size
     """
-    files_by_size = defaultdict(list)
+    if verbose:
+        print(colored(f"[#] Group files by size in the directory:", "blue"), colored(
+            directory, "yellow"))
 
+    files_by_size = defaultdict(list)
     count = 0
 
-    # Walk through the directory and subdirectories
-    for root, _, files in os.walk(directory):
-        for file in files:
+    # Using pathlib for clearer and safer path management
+    root_path = Path(directory)
+
+    for file_path in root_path.rglob('*'):  # rglob gets all files recursively
+        if file_path.is_file():  # Ensure it's a file
             count += 1
-            # Construct full file path
-            full_path = os.path.join(root, file)
-
             try:
-                # Get the file size
-                file_size = os.path.getsize(full_path)
-
-                # Add the file path to the list for this file size
-                files_by_size[file_size].append(full_path)
+                file_size = file_path.stat().st_size  # Efficient way to get file size
+                # Append file path as a string
+                files_by_size[file_size].append(str(file_path))
             except OSError as e:
-                print(f"Error accessing file {full_path}: {e}")
+                print(f"Error accessing file {file_path}: {e}")
 
     if verbose:
-        print(colored("[*] Found", "green"),
-              colored(count, "yellow"), colored("files", "green"))
+        print(colored(f"[*] Found {count} files", "green"))
 
     return files_by_size
