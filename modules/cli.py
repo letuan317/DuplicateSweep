@@ -52,22 +52,15 @@ def main():
 
     # If --delete is specified, delete duplicate files
     if args.delete:
-        deleted_files = delete_duplicate_files_in_directory(
+        delete_duplicate_files_in_directory(
             directory=args.source,
             verbose=args.verbose,
             force=args.force,
             dry_run=args.dry_run
         )
-        if deleted_files:
-            cprint(
-                f"[!] {len(deleted_files)} duplicate files deleted.", "green")
-        elif not args.dry_run:
-            cprint("[!] No duplicates were deleted.", "yellow")
     else:
         # Otherwise, just find duplicate files and show them
-        duplicate_files = duplicate_files_in_directory(
+        duplicate_files_in_directory(
             directory=args.source,
             verbose=args.verbose
         )
-        if not duplicate_files:
-            cprint("[!] No duplicate files found.", "yellow")
