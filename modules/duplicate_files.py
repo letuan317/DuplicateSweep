@@ -98,10 +98,11 @@ def delete_duplicate_files_in_directory(directory, verbose=True, force=False, dr
                                 os.remove(_file)
                                 deleted_files.append(_file)
                                 if verbose:
-                                    print(colored(f"Deleted {_file}", "green"))
+                                    print(
+                                        colored(f"[-] Deleted", "red"), colored(_file, "light_red"))
                             except OSError as e:
                                 print(
-                                    colored(f"Error deleting {_file}: {e}", "red"))
+                                    colored(f"[!] Error deleting {_file}: {e}", "red"))
                         else:
                             if verbose:
                                 print(
