@@ -1,6 +1,7 @@
 from . import finder, utils, hashing
 
 from termcolor import cprint, colored
+import os
 
 
 def duplicate_files_in_directory(directory):
@@ -23,10 +24,11 @@ def duplicate_files_in_directory(directory):
 
             if len(temp_list) > 2:
                 duplicate_files_list.append(temp_list)
-
-                print(f"\nFiles with size {file_size} bytes:",
-                      utils.convert_size(file_size))
-                print(colored(f" - {file}", "red"))
+                for file in temp_list:
+                    file_size = os.path.getsize(file)
+                    print(f"\nFiles with size {file_size} bytes:",
+                          utils.convert_size(file_size))
+                    print(colored(f" - {file}", "red"))
 
     if len(duplicate_files_list) == 0:
         cprint("\n[!] No duplicate files found.", "yellow")
