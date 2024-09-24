@@ -54,7 +54,7 @@ def duplicate_files_in_directory(directory, verbose=True):
     if len(duplicate_files_list) == 0:
         if verbose:
             cprint("\n[!] No duplicate files found.", "yellow")
-        return False
+        return []
 
     if verbose:
         print(colored("\n[!] Duplicate files found:", "red"),
