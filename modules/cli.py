@@ -11,20 +11,20 @@ def main():
 
     # Positional argument for the directory path
     parser.add_argument(
-        "directory",
+        "-s", "--source",
         help="The directory to scan for duplicate files."
     )
 
     # Optional argument to delete duplicate files
     parser.add_argument(
-        "--delete",
+        "-d", "--delete",
         action="store_true",
         help="Delete duplicate files found in the directory."
     )
 
     # Force deletion without asking for confirmation
     parser.add_argument(
-        "--force",
+        "-f", "--force",
         action="store_true",
         help="Force deletion of duplicate files without confirmation."
     )
@@ -48,12 +48,12 @@ def main():
 
     # Display which directory we're scanning
     if args.verbose:
-        cprint(f"[*] Scanning directory: {args.directory}", "blue")
+        cprint(f"[*] Scanning directory: {args.source}", "blue")
 
     # If --delete is specified, delete duplicate files
     if args.delete:
         deleted_files = delete_duplicate_files_in_directory(
-            directory=args.directory,
+            directory=args.source,
             verbose=args.verbose,
             force=args.force,
             dry_run=args.dry_run
@@ -66,7 +66,7 @@ def main():
     else:
         # Otherwise, just find duplicate files and show them
         duplicate_files = duplicate_files_in_directory(
-            directory=args.directory,
+            directory=args.source,
             verbose=args.verbose
         )
         if not duplicate_files:
