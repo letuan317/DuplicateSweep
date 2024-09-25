@@ -77,7 +77,8 @@ def compare_two_files(source_file, target_file, verbose):
         source_file_size = os.path.getsize(source_file)
         target_file_size = os.path.getsize(target_file)
         if source_file_size != target_file_size:
-            cprint("[!] File sizes do not match.", "red")
+            if verbose:
+                cprint("[!] File sizes do not match.", "red")
             return None
 
         if filecmp.cmp(source_file, target_file, shallow=False):
@@ -114,7 +115,7 @@ def duplicate_files_from_source_directory_with_target_directory(source_directory
 
                 # Using ThreadPoolExecutor to parallelize the comparison
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    futures = [executor.submit(compare_two_files, source_file, _target_file, verbose)
+                    futures = [executor.submit(compare_two_files, source_file, _target_file, verbose=False)
                                for _target_file in _target_files]
 
                     # Collect results from futures
@@ -158,12 +159,12 @@ def delete_duplicate_files(duplicate_files_list, verbose=True, force=False):
     """
 
     for idx, files in enumerate(duplicate_files_list):
-        print(f"\n{idx + 1}/{len(duplicate_files_list)}",
+        print(f"\n{idx + 1}/{len(duplicate_files_list)}", "Keep file:",
               colored(files[0], "cyan"))
 
         delete_files = files[1:]
         for _file in delete_files:
-            print(colored(_file, "red"))
+            print("Delete file:", colored(_file, "red"))
 
         if not force:
             confirm = input(
