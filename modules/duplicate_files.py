@@ -1,5 +1,6 @@
 from . import finder, utils
 
+from concurrent.futures import ThreadPoolExecutor
 from termcolor import cprint, colored
 from alive_progress import alive_bar
 import filecmp
@@ -63,14 +64,41 @@ def duplicate_files_in_directory(directory, verbose=True):
     return duplicate_files_list
 
 
-def duplicate_files_from_source_directory_with_target_directory(source_directory, target_directory, verbose=True):
+def compare_two_files(source_file, _target_file, verbose):
     """
-    Identifies duplicate files from source directory with target directory, if duplicate, delete source file
+    Compares a source file with a target file for duplication.
+
+    :param source_file: The source file path.
+    :param _target_file: The target file path.
+    :param verbose: Whether to print detailed information.
+    :return: The target file path if duplicate is found, else None.
+    """
+    try:
+        if filecmp.cmp(source_file, _target_file, shallow=False):
+            if verbose:
+                file_size = os.path.getsize(source_file)
+                print(
+                    f"\nFiles with size {file_size} bytes: {utils.convert_size(file_size)}")
+                print(colored(f"[>] Checking", "blue"),
+                      colored(source_file, "cyan"))
+                print(colored("[+] Duplicate file found:", "red"), colored(_target_file, "cyan"),
+                      os.path.getsize(_target_file))
+            return _target_file
+    except Exception as e:
+        cprint(
+            f"Error comparing files {source_file} and {_target_file}: {e}", "red")
+    return None
+
+
+def duplicate_files_from_source_directory_with_target_directory(source_directory, target_directory, verbose=True, max_workers=4):
+    """
+    Identifies duplicate files from source directory with target directory, if duplicate, delete source file.
 
     :param source_directory: The directory to search for duplicates.
-    :param target_directory: The directory to move the duplicate files to.
+    :param target_directory: The directory to check for duplicates.
     :param verbose: Whether to print detailed information.
-    :return: A list of moved files (if any).
+    :param max_workers: Maximum number of threads to use.
+    :return: A list of duplicate files found.
     """
     source_files = finder.get_all_files(source_directory)
     target_files_by_size = finder.group_files_by_size(target_directory)
@@ -84,22 +112,18 @@ def duplicate_files_from_source_directory_with_target_directory(source_directory
             if target_files_by_size.get(source_file_size):
                 _target_files = target_files_by_size[source_file_size]
 
-                for _target_file in _target_files:
-                    try:
-                        if filecmp.cmp(source_file, _target_file, shallow=False):
-                            duplicate_files_list.append(
-                                [_target_file, source_file])
+                # Using ThreadPoolExecutor to parallelize the comparison
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(compare_two_files, source_file, _target_file, verbose)
+                               for _target_file in _target_files]
 
-                            print(
-                                f"\nFiles with size {source_file_size} bytes: {utils.convert_size(source_file_size)}")
-                            print(colored(f"[>] Checking", "blue"), colored(
-                                source_file, "cyan"))
-                            print(colored("[+] Duplicate file found:",
-                                  "red"), colored(_target_file, "cyan"), os.path.getsize(_target_file))
+                    # Collect results from futures
+                    for future in futures:
+                        result = future.result()
+                        if result:
+                            duplicate_files_list.append([result, source_file])
                             break
-                    except Exception as e:
-                        cprint(
-                            f"Error comparing files {source_file} and {_target_file}: {e}", "red")
+
             bar()
 
     if len(duplicate_files_list) == 0:
