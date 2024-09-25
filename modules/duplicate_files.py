@@ -64,29 +64,29 @@ def duplicate_files_in_directory(directory, verbose=True):
     return duplicate_files_list
 
 
-def compare_two_files(source_file, _target_file, verbose):
+def compare_two_files(source_file, target_file, verbose):
     """
     Compares a source file with a target file for duplication.
 
     :param source_file: The source file path.
-    :param _target_file: The target file path.
+    :param target_file: The target file path.
     :param verbose: Whether to print detailed information.
     :return: The target file path if duplicate is found, else None.
     """
     try:
-        if filecmp.cmp(source_file, _target_file, shallow=False):
+        source_file_size = os.path.getsize(source_file)
+        target_file_size = os.path.getsize(target_file)
+        if source_file_size != target_file_size:
+            cprint("[!] File sizes do not match.", "red")
+            return None
+
+        if filecmp.cmp(source_file, target_file, shallow=False):
             if verbose:
-                file_size = os.path.getsize(source_file)
-                print(
-                    f"\nFiles with size {file_size} bytes: {utils.convert_size(file_size)}")
-                print(colored(f"[>] Checking", "blue"),
-                      colored(source_file, "cyan"))
-                print(colored("[+] Duplicate file found:", "red"), colored(_target_file, "cyan"),
-                      os.path.getsize(_target_file))
-            return _target_file
+                cprint("[!] The files are identical.", "yellow")
+            return target_file
     except Exception as e:
         cprint(
-            f"Error comparing files {source_file} and {_target_file}: {e}", "red")
+            f"Error comparing files {source_file} and {target_file}: {e}", "red")
     return None
 
 
@@ -131,6 +131,18 @@ def duplicate_files_from_source_directory_with_target_directory(source_directory
     else:
         print(colored("\n[!] Duplicate files found:", "red"),
               colored(len(duplicate_files_list), "yellow"))
+
+        for duplicate_files in duplicate_files_list:
+            source_file = duplicate_files[1]
+            target_file = duplicate_files[0]
+            source_file_size = os.path.getsize(source_file)
+            target_file_size = os.path.getsize(source_file)
+            print(
+                f"\nFiles with size {source_file_size} bytes: {utils.convert_size(source_file_size)}")
+            print(colored(f"[>] Checking", "blue"),
+                  colored(source_file, "cyan"))
+            print(colored("[+] Duplicate file found:", "red"),
+                  colored(target_file, "cyan"), target_file_size)
 
     return duplicate_files_list
 
