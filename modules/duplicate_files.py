@@ -79,9 +79,6 @@ def duplicate_files_from_source_directory_with_target_directory(source_directory
 
     with alive_bar(len(source_files)) as bar:
         for source_file in source_files:
-            print(colored(f"[>] Checking", "blue"),
-                  colored(source_file, "cyan"))
-
             source_file_size = os.path.getsize(source_file)
 
             if target_files_by_size.get(source_file_size):
@@ -92,8 +89,13 @@ def duplicate_files_from_source_directory_with_target_directory(source_directory
                         if filecmp.cmp(source_file, _target_file, shallow=False):
                             duplicate_files_list.append(
                                 [_target_file, source_file])
-                            print(colored("[+] Duplicate file found:", "red"),
-                                  colored(_target_file, "cyan"), "\n")
+
+                            print(
+                                f"\nFiles with size {source_file_size} bytes: {utils.convert_size(source_file_size)}")
+                            print(colored(f"[>] Checking", "blue"), colored(
+                                source_file, "cyan"))
+                            print(colored("[+] Duplicate file found:",
+                                  "red"), colored(_target_file, "cyan"), os.path.getsize(_target_file))
                             break
                     except Exception as e:
                         cprint(
