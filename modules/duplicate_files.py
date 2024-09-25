@@ -159,7 +159,7 @@ def delete_duplicate_files(duplicate_files_list, verbose=True, force=False):
     """
 
     for idx, files in enumerate(duplicate_files_list):
-        print(f"\n{idx + 1}/{len(duplicate_files_list)}", "Keep file:",
+        print(f"\n{str(idx + 1).zfill(len(str(len(duplicate_files_list))))}/{len(duplicate_files_list)}", "Keep file:",
               colored(files[0], "cyan"))
 
         delete_files = files[1:]
